@@ -54,8 +54,18 @@ func commands(d *db.DB, apiKey string) {
 		},
 		{
 			Name:   "random_strategy",
-			Usage:  "Update rates in database",
-			Action: randomStrategyCommand(client, d, apiKey),
+			Usage:  "Compute the profit of getting random coins a month ago",
+			Action: randomStrategyCommand(d),
+		},
+		{
+			Name:   "trend_strategy",
+			Usage:  "Compute the profit of getting trending coins two weeks ago",
+			Action: trendStrategyCommand(d),
+		},
+		{
+			Name:   "descend_strategy",
+			Usage:  "Compute the profit of getting descending coins a month ago",
+			Action: descendStrategyCommand(d),
 		},
 	}
 }

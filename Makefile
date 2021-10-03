@@ -1,14 +1,20 @@
 DB_BACKUP_PATH=/tmp/$(shell date +'%Y%m%d_%H%M%S').dump
 DB_BACKUP_ARCHIVE=${DB_BACKUP_PATH}.zip
 
+STRATEGIES = random trend descend
+STRATEGIES_COMMANDS = $(addsuffix _strategy, ${STRATEGIES})
+
+print:
+	@echo ${STRATEGIES_COMMANDS}
+
 get_coins:
 	./bin/crypto-watch get_coins
 
 get_rates:
 	./bin/crypto-watch get_rates
 
-random_strategy:
-	./bin/crypto-watch random_strategy
+$(STRATEGIES_COMMANDS):
+	./bin/crypto-watch $@
 
 build:
 	go build -o ./bin/crypto-watch cmd/*.go

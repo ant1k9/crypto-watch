@@ -76,3 +76,38 @@ func (d *DB) GetLastRate(uuid string, ts time.Time) (Rate, error) {
 	err := d.inner.Get(&rate, query, args...)
 	return rate, err
 }
+
+func (d *DB) GetTrendingCoins(ts time.Time) ([]Coin, error) {
+	return d.getTrendingCoins(ts, 10, "cs2.value / cs1.value DESC")
+}
+
+func (d *DB) GetDescendingCoins(ts time.Time) ([]Coin, error) {
+	return d.getTrendingCoins(ts, 30, "cs1.value / cs2.value DESC")
+}
+
+func (d *DB) getTrendingCoins(ts time.Time, window int, orderBy string) ([]Coin, error) {
+	query, args, _ := sq.Select("coins.name", "coins.uuid", "coins.id", "coins.symbol").
+		From("coin_stats cs1").
+		InnerJoin("coin_stats cs2 USING(coin_uuid)").
+		InnerJoin("coins ON cs1.coin_uuid = coins.uuid").
+		Where(sq.Eq{"cs1.rn": 1, "cs2.rn": window}).
+		Where(sq.NotEq{"cs1.value": 0, "cs2.value": 0}).
+		Where(sq.LtOrEq{"coins.rank": 40}).
+		OrderBy(orderBy).
+		Limit(10).
+		Prefix(
+			`WITH coin_stats AS (
+		       SELECT
+				   coin_uuid, value, 
+		           ROW_NUMBER() OVER (PARTITION BY coin_uuid ORDER BY ts DESC) rn
+		       FROM rates
+			   WHERE ts <= '` + ts.Format("2006-01-02 15:04:05") + `'
+		   )
+		   `).
+		PlaceholderFormat(sq.Dollar).
+		ToSql()
+
+	var coins []Coin
+	err := d.inner.Select(&coins, query, args...)
+	return coins, err
+}

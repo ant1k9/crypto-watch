@@ -11,19 +11,28 @@ import (
 	"github.com/ant1k9/crypto-watch/internal/pkg/db"
 )
 
-func randomStrategyCommand(d *db.DB) func(c *cli.Context) {
+func trendStrategyCommand(d *db.DB) func(c *cli.Context) {
+	return trendStrategy(d, d.GetTrendingCoins)
+}
+
+func descendStrategyCommand(d *db.DB) func(c *cli.Context) {
+	return trendStrategy(d, d.GetDescendingCoins)
+}
+
+func trendStrategy(d *db.DB, getCoins func(time.Time) ([]db.Coin, error)) func(c *cli.Context) {
 	return func(_ *cli.Context) {
 		rand.Seed(time.Now().UnixNano())
 
-		coins, err := d.GetCoins()
+		// two weeks ago
+		offset := -time.Hour * 14 * 24
+		coins, err := getCoins(time.Now().Add(offset))
 		if err != nil {
 			log.Fatalf("cannot get coins from db: %s", err)
 			return
 		}
 
 		var profit float64
-		for _, lowerBorder := range []int{0, 0, 0, 10, 10, 10, 20, 20} {
-			coin := coins[rand.Intn(10)+lowerBorder]
+		for _, coin := range coins {
 			log.Println("coin " + coin.Name + " (" + coin.Symbol + ")")
 
 			currentRate, err := d.GetLastRate(coin.UUID, time.Now().Add(-time.Hour*0))
@@ -32,18 +41,19 @@ func randomStrategyCommand(d *db.DB) func(c *cli.Context) {
 				return
 			}
 
-			initialRate, err := d.GetLastRate(coin.UUID, time.Now().Add(-time.Hour*30*24-1))
+			initialRate, err := d.GetLastRate(coin.UUID, time.Now().Add(offset-time.Hour))
 			if err != nil {
 				log.Fatalf("cannot get current rate: %s", err)
 				return
 			}
 
 			if initialRate.Value == 0 {
+				profit += 100.0 // back profit back because it seems to be a mistake
 				log.Printf("zero price for coin %s", coin.Name)
 				continue
 			}
 
-			profit += 125.0 * (currentRate.Value - initialRate.Value) / initialRate.Value
+			profit += 100.0 * (currentRate.Value - initialRate.Value) / initialRate.Value
 		}
 
 		fmt.Println("initial sum: 1000$")

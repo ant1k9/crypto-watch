@@ -58,7 +58,7 @@ function trending_query
     SELECT coins.name FROM coin_stats cs1
     INNER JOIN coin_stats cs2 USING(coin_uuid)
     INNER JOIN coins ON cs1.coin_uuid = coins.uuid'
-    echo "WHERE cs1.rn = 1 AND cs2.rn = $_flag_days AND cs1.value > 0 AND cs2.value > 0"
+    echo "WHERE cs1.rn = 1 AND cs2.rn = $_flag_days AND cs1.value > 0 AND cs2.value > 0 AND rank <= 40"
     echo "ORDER BY $_flag_order_by LIMIT $_flag_top"
 end
 
