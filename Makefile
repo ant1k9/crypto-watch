@@ -24,7 +24,7 @@ migrate:
 
 .PHONY: backup
 backup:
-	@pg_dump --data-only -d "$$DB_DSN" > "${DB_BACKUP_PATH}" &>/dev/null
+	@pg_dump --data-only -d "$$DB_DSN" > "${DB_BACKUP_PATH}" 2>/dev/null
 	@zip "${DB_BACKUP_ARCHIVE}" "${DB_BACKUP_PATH}" &>/dev/null
 	@rm "${DB_BACKUP_PATH}"
 	@echo "${DB_BACKUP_ARCHIVE}"
