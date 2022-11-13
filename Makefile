@@ -7,10 +7,10 @@ STRATEGIES_COMMANDS = $(addsuffix _strategy, ${STRATEGIES})
 print:
 	@echo ${STRATEGIES_COMMANDS}
 
-get_coins:
+get_coins: build
 	./bin/crypto-watch get_coins
 
-get_rates:
+get_rates: build
 	./bin/crypto-watch get_rates
 
 $(STRATEGIES_COMMANDS):
