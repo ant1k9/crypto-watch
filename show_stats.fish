@@ -1,6 +1,10 @@
 #!/usr/bin/env fish
 
 ## helpers
+function list_coins
+    psql $DB_DSN -qXAt -c "SELECT rank, name FROM coins ORDER BY rank LIMIT 40"
+end
+
 function show_graph
     argparse 'c/coin=' 'h/height=' 'w/width=' -- $argv
     if test "$_flag_height" = ""
@@ -65,6 +69,7 @@ end
 ## body
 argparse \
     'h/help' \
+    'list' \
     'show=' \
     'trending' \
     'descending' \
@@ -76,13 +81,17 @@ argparse \
 
 if set -q _flag_help
     echo -n 'Usage:
-    ./show_stats.fish                          # help charts for all coins
+    ./show_stats.fish                          # charts for all coins
     ./show_stats.fish --width 100 --height 10  # customize width and height of charts
     ./show_stats.fish --help                   # help message
     ./show_stats.fish --show Ethereum          # make Ethereum chart
     ./show_stats.fish --trending --days 7      # make charts for top 10 trending coins
     ./show_stats.fish --descending             # make charts for top 10 descending coins
 '
+
+else if set -q _flag_list
+    list_coins
+
 else if set -q _flag_show
     show_graph \
         -c "$_flag_show" \
