@@ -15,7 +15,6 @@ function show_graph
     end
 
     set -l rank (psql $DB_DSN -qXAt -c "SELECT rank FROM coins WHERE name = '$_flag_coin'")
-    echo "         [$rank] $_flag_coin"
     set -l query "
         SELECT value FROM (
             SELECT value, ts
@@ -26,7 +25,14 @@ function show_graph
         ) tmp
         ORDER BY ts"
 
-    psql $DB_DSN -qXAt -c "$query" | asciigraph -w "$_flag_width" -h "$_flag_height"
+    if test "$UTOOL_ENABLED" = "true"
+        psql $DB_DSN -qXAt -c "$query" \
+            | uplot lineplot -t "[$rank] $_flag_coin" -w 80 -h "$_flag_height" 2>&1
+    else
+        echo "         [$rank] $_flag_coin"
+        psql $DB_DSN -qXAt -c "$query" \
+            | asciigraph -w "$_flag_width" -h "$_flag_height"
+    end
     echo
 end
 
@@ -62,7 +68,9 @@ function trending_query
     SELECT coins.name FROM coin_stats cs1
     INNER JOIN coin_stats cs2 USING(coin_uuid)
     INNER JOIN coins ON cs1.coin_uuid = coins.uuid'
-    echo "WHERE cs1.rn = 1 AND cs2.rn = $_flag_days AND cs1.value > 0 AND cs2.value > 0 AND rank <= 40"
+    echo "WHERE cs1.rn = 1 AND cs2.rn = $_flag_days"
+    echo "AND cs1.value > 0 AND cs2.value > 0 AND rank <= 40"
+    echo "AND name NOT LIKE '%USD%'"
     echo "ORDER BY $_flag_order_by LIMIT $_flag_top"
 end
 
